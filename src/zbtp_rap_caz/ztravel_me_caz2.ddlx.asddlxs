@@ -1,0 +1,76 @@
+@Metadata.layer: #CORE
+@UI:{ headerInfo:{ typeName: 'Travel',
+                   typeNamePlural: 'Travels',
+                   title:{ type: #STANDARD,value: 'TravelID' } },
+      presentationVariant: [{ sortOrder: [{ by: 'TravelID',direction: #ASC }] }] }
+annotate entity ZTRAVEL_C_CAZ with
+{
+
+  @UI.facet: [{id :'Travel',
+              purpose: #STANDARD,
+              type:#IDENTIFICATION_REFERENCE ,
+              label: 'Travel',
+              position  :10},
+              
+              { id : 'Booking',
+               purpose :#STANDARD,
+               type:#LINEITEM_REFERENCE,
+               position: 20 ,
+               label :'Booking',
+               targetElement: '_Booking'
+       } ]
+
+
+  @UI.hidden: true
+  TravelUUID;
+  @UI.identification: [{position: 10  }]
+  @UI:{ lineItem: [{position: 10,importance: #HIGH },
+  {type:#FOR_ACTION,dataAction: 'accepttravel' ,label: 'Accept',invocationGrouping: #CHANGE_SET, position: 11 } ,
+  {type:#FOR_ACTION,dataAction: 'rejecttravel' ,label: 'Reject',invocationGrouping: #CHANGE_SET, position: 21 },
+  {type:#FOR_ACTION,dataAction: 'Discount' ,label: 'Discount3',invocationGrouping: #CHANGE_SET, position: 22 }
+  ] }
+  TravelID;
+   @UI.identification: [{position: 20  }]
+  @UI.lineItem: [{position: 20,importance: #HIGH  }]
+   @Consumption.valueHelpDefinition: [{entity:{name: 'ZDMOI_AGENCY_VHS',element: 'AgencyID'  },useForValidation:true}]
+  AgencyID;
+   @UI.identification: [{position: 30  }]
+  @UI.lineItem: [{position: 30,importance: #HIGH  }]
+  @Consumption.valueHelpDefinition: [{entity:{name: '/DMO/I_Customer_StdVH',element: 'CustomerID'  },useForValidation: true}]
+  CustomerID;
+   @UI.identification: [{position: 40  }]
+  @UI.lineItem: [{position: 40,importance: #HIGH  }]
+  BeginDate;
+   @UI.identification: [{position: 50  }]
+  @UI.lineItem: [{position: 50,importance: #HIGH  }]
+  EndDate;
+   @UI.identification: [{position: 60  }]
+  @UI.lineItem: [{position: 60,importance: #HIGH  }]
+
+  BookingFee;
+   @UI.identification: [{position: 70  }]
+  @UI.lineItem: [{position: 70,importance: #HIGH  }]
+  TotalPrice;
+   @Consumption.valueHelpDefinition: [{entity:{name: 'I_CurrencyStdVH',element: 'Currency'  }}]
+ // @UI.hidden: true
+  CurrencyCode;
+   @UI.identification: [{position: 80  }]
+  @UI.lineItem: [{position: 80,importance: #MEDIUM }]
+  Description;
+   @UI.identification: [{position: 90  }]
+  @UI.lineItem: [{position: 90,importance: #MEDIUM }]
+  OverallStatus;
+
+  @UI.hidden: true
+  LocalCreatedBy;
+  @UI.hidden: true
+  LocalCreatedAt;
+  @UI.hidden: true
+  LocalLastChangedBy;
+  @UI.hidden: true
+  LocalLastChangedAt;
+  
+  /* Associations */
+  @UI.hidden: true
+    _Booking;
+}
