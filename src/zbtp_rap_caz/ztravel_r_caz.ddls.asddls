@@ -2,7 +2,7 @@
 @EndUserText.label: 'Travel root entity'
 @Metadata.ignorePropagatedAnnotations: true
 define root view entity ZTRAVEL_R_CAZ
-  as select from ztravel_caz_a
+  as select from ztravel_caz_a 
   
   composition [0..*] of zbooking_r_caz as _Booking 
 
@@ -17,6 +17,7 @@ define root view entity ZTRAVEL_R_CAZ
       customer_id           as CustomerID,
       begin_date            as BeginDate,
       end_date              as EndDate,
+
       @Semantics.amount.currencyCode: 'CurrencyCode'
       booking_fee           as BookingFee,
       @Semantics.amount.currencyCode: 'CurrencyCode'
@@ -25,7 +26,6 @@ define root view entity ZTRAVEL_R_CAZ
       description           as Description,
       overall_status        as OverallStatus,
 
-      //Managed fields
       @Semantics.user.createdBy: true
       local_created_by      as LocalCreatedBy,
       @Semantics.systemDateTime.createdAt: true
@@ -33,20 +33,18 @@ define root view entity ZTRAVEL_R_CAZ
       @Semantics.user.localInstanceLastChangedBy: true
       local_last_changed_by as LocalLastChangedBy,
 
-      //Local Etag Field -> OData Etag
+      //local ETag field -> OData ETag
       @Semantics.systemDateTime.localInstanceLastChangedAt: true
       local_last_changed_at as LocalLastChangedAt,
 
-      //Total Etag Field ->
+      //total ETag field
       @Semantics.systemDateTime.lastChangedAt: true
-      last_changed_at      as LastChangedAt,
-      
-      //Composition
-      _Booking,
+      last_changed_at       as LastChangedAt, 
 
-      // Associations
-      _Agency, //Make association public
+      // Make association public
+      _Agency,
       _Customer,
       _OverallStatus,
-      _Currency
+      _Currency,
+      _Booking
 }

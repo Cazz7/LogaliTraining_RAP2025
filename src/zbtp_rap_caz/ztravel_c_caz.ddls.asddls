@@ -66,7 +66,7 @@ define root view entity ZTRAVEL_C_CAZ
       LocalCreatedAt,
       LocalLastChangedBy,
       LocalLastChangedAt,
-      LocalChangedAt,
+      LastChangedAt,
 
       /* Associations */
       _Agency,

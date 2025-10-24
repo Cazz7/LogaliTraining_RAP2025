@@ -18,8 +18,8 @@ define view entity ZBKSPPL_R_CAZZ
 
 {
   key booksuppl_uuid        as BooksupplUUID,
-      root_uuid             as TravelUUID,
-      parent_uuid           as BookingUUID,
+      travel_uuid             as TravelUUID,
+      booking_uuid           as BookingUUID,
       booking_supplement_id as BookingSupplementID,
       supplement_id         as SupplementID,
       @Semantics.amount.currencyCode: 'CurrencyCode'

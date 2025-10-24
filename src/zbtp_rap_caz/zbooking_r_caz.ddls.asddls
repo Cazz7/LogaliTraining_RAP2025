@@ -17,11 +17,11 @@ define view entity zbooking_r_caz
   association [1..1] to /DMO/I_Booking_Status_VH as _BookingStatus on  $projection.BookingStatus = _BookingStatus.BookingStatus
 {
   key booking_uuid          as BookingUUID,
-      parent_uuid           as TravelUUID,
+      travel_uuid           as TravelUUID,
       booking_id            as BookingID,
       booking_date          as BookingDate,
       customer_id           as CustomerID,
-      carrier_id            as AirlineID,
+      airline_id            as AirlineID,
       connection_id         as ConnectionID,
       flight_date           as FlightDate,
       @Semantics.amount.currencyCode: 'CurrencyCode'

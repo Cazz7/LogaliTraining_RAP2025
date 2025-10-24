@@ -28,12 +28,11 @@ define root view entity ZTRAVEL_I_CAZ
       //LocalLastChangedBy,
       
       
-      //Local Etag Field -> OData Etag
       @Semantics.systemDateTime.localInstanceLastChangedAt: true
       LocalLastChangedAt,
-      //Total Etag Field ->
       @Semantics.systemDateTime.lastChangedAt: true
-      LocalChangedAt,
+      LastChangedAt,
+      
       /* Associations */
       _Agency,
       _Booking : redirected to composition child ZBOOKING_I_CAZ,
