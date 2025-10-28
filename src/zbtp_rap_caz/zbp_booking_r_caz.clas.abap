@@ -1,15 +1,5 @@
-class ZBP_BOOKING_R_CAZ definition
-  public
-  abstract
-  final
-  create public .
-
-public section.
-protected section.
-private section.
+CLASS zbp_booking_r_caz DEFINITION PUBLIC ABSTRACT FINAL FOR BEHAVIOR OF ztravel_r_caz.
 ENDCLASS.
 
-
-
-CLASS ZBP_BOOKING_R_CAZ IMPLEMENTATION.
+CLASS zbp_booking_r_caz IMPLEMENTATION.
 ENDCLASS.

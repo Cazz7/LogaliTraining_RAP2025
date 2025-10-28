@@ -149,6 +149,31 @@ CLASS lhc_Travel IMPLEMENTATION.
   ENDMETHOD.
 
   METHOD setTravelNumber.
+
+  READ ENTITIES OF ztravel_r_caz IN LOCAL MODE
+  ENTITY Travel
+  FIELDS ( TravelID )
+  WITH CORRESPONDING #( keys )
+  RESULT DATA(travels).
+
+  DELETE travels WHERE TravelID IS NOT INITIAL.
+
+  " Obtengo el último registro guardado
+  SELECT SINGLE FROM ztravel_caz_a
+  FIELDS MAX( travel_id )
+  INTO @DATA(max_travel_id).
+
+  " Desde el frontend pueden mandarme más de un registro
+*  max_travel_id + 1
+*  max_travel_id + 2
+*  max_travel_id + 3
+  MODIFY ENTITIES OF ztravel_r_caz IN LOCAL MODE
+  ENTITY Travel
+  UPDATE
+  FIELDS ( TravelID )
+  WITH VALUE #( FOR travel IN travels INDEX INTO i ( %tky = travel-%tky
+                                                     TravelID = max_travel_id + i ) ).
+
   ENDMETHOD.
 
   METHOD validateAgency.

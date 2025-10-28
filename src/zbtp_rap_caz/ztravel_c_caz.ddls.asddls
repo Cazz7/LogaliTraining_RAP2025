@@ -5,6 +5,7 @@
 
 @Metadata.ignorePropagatedAnnotations: true
 @Search.searchable: true
+@ObjectModel.semanticKey: [ 'TravelID' ]
 //@VDM.viewType: #CONSUMPTION
 
 define root view entity ZTRAVEL_C_CAZ

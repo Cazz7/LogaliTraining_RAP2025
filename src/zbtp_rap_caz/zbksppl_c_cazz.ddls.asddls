@@ -2,7 +2,8 @@
 @EndUserText.label: 'Booking Supplement Consumption Entity'
 @Metadata.ignorePropagatedAnnotations: true
 @Metadata.allowExtensions: true
-define view entity ZBKSPPL_C_CAZZ as projection on ZBKSPPL_R_CAZZ
+@ObjectModel.semanticKey: [ 'BookingSupplementID' ]
+define view entity ZBKSPPL_C_CAZZ as projection on ZBKSPPL_R_CAZZ 
 {
   key BooksupplUUID,
       TravelUUID,

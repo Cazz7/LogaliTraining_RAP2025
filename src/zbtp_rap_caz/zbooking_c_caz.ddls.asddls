@@ -2,6 +2,7 @@
 @EndUserText.label: 'Booking Consumption Entity'
 @Metadata.ignorePropagatedAnnotations: true
 @Metadata.allowExtensions: true
+@ObjectModel.semanticKey: [ 'BookingID' ]
 define view entity ZBOOKING_C_CAZ
   as projection on zbooking_r_caz
 {
