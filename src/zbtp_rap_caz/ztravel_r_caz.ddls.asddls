@@ -11,7 +11,7 @@ define root view entity ZTRAVEL_R_CAZ
   association [1..1] to /DMO/I_Overall_Status_VH as _OverallStatus on $projection.OverallStatus = _OverallStatus.OverallStatus
   association [0..1] to I_Currency               as _Currency      on $projection.CurrencyCode = _Currency.Currency
 {
-  key travel_uuid           as TravelUUID,
+  key travel_uuid           as TravelUUID, 
       travel_id             as TravelID,
       agency_id             as AgencyID,
       customer_id           as CustomerID,

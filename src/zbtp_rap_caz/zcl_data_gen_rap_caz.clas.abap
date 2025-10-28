@@ -79,7 +79,7 @@ CLASS zcl_data_gen_rap_caz IMPLEMENTATION.
     insert zbksppl_caz_a from (
        select from /dmo/book_suppl as supp
               join ztravel_caz_a  as trvl on trvl~travel_id = supp~travel_id
-              join zbooking_caz_a as book on book~parent_uuid = trvl~travel_uuid
+              join zbooking_caz_a as book on book~travel_uuid = trvl~travel_uuid
                                          and book~booking_id = supp~booking_id
               fields
               uuid( )                 as booksuppl_uuid,
