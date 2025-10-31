@@ -52,7 +52,7 @@ annotate entity ZTRAVEL_C_CAZ with
                       },
                     { type: #FOR_ACTION,
                       dataAction: 'deductDiscount',
-                      label: 'DiscountInd'}],
+                      label: 'Discount'}],
 //  {type:#FOR_ACTION,dataAction: 'accepttravel' ,label: 'Accept',invocationGrouping: #CHANGE_SET } ,
 //  {type:#FOR_ACTION,dataAction: 'rejecttravel' ,label: 'Reject',invocationGrouping: #CHANGE_SET },
 //  {type:#FOR_ACTION,dataAction: 'Discount' ,label: 'Discount1',invocationGrouping: #CHANGE_SET }],

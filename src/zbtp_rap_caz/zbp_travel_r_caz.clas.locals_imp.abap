@@ -97,6 +97,79 @@ CLASS lhc_Travel IMPLEMENTATION.
   METHOD get_instance_authorizations.
 
     " Definimos autorizaciones a nivel de instancia y a nivel global
+    DATA: update_requested TYPE abap_bool,
+          update_granted   TYPE abap_bool,
+          delete_requested TYPE abap_bool,
+          delete_granted   TYPE abap_bool.
+
+    " Leo primero la entidad para ver qué tiene o qué agencia tiene
+    READ ENTITIES OF ztravel_r_caz IN LOCAL MODE
+    ENTITY Travel
+    FIELDS ( AgencyID )
+    " Cuando leemos siempre será corresponding
+    WITH CORRESPONDING #( keys )
+    RESULT DATA(Travels).
+
+    " A nivel de instancia el crear un registro es una actualización
+    update_requested = COND #( WHEN requested_authorizations-%update = if_abap_behv=>mk-on
+                                  OR requested_authorizations-%action-Edit = if_abap_behv=>mk-on
+                                  THEN abap_true
+                                  ELSE abap_false ).
+
+    delete_requested = COND #( WHEN requested_authorizations-%delete = if_abap_behv=>mk-on
+                                  THEN abap_true
+                                  ELSE abap_false ).
+
+    DATA(lv_technical_name) = cl_abap_context_info=>get_user_technical_name( ).
+
+    LOOP AT travels INTO DATA(travel).
+
+      " Update
+      IF update_requested = abap_true.
+
+        IF travel-agencyID NE '070014'.
+          update_granted = abap_true.
+        ELSE.
+          update_granted = abap_false.
+          APPEND VALUE #( %msg = NEW /dmo/cm_flight_messages( textid = /dmo/cm_flight_messages=>not_authorized_for_agencyid
+                                                              agency_id = travel-AgencyID
+                                                              severity = if_abap_behv_message=>severity-error  )
+          ) TO reported-travel.
+        ENDIF.
+
+      ENDIF.
+
+      " Delete
+      IF delete_requested = abap_true.
+
+        IF travel-agencyID NE '070014'.
+          update_granted = abap_true.
+        ELSE.
+          delete_granted = abap_false.
+          APPEND VALUE #( %msg = NEW /dmo/cm_flight_messages( textid = /dmo/cm_flight_messages=>not_authorized_for_agencyid
+                                                              agency_id = travel-AgencyID
+                                                              severity = if_abap_behv_message=>severity-error  )
+          ) TO reported-travel.
+        ENDIF.
+
+      ENDIF.
+
+      " Informar el resultado
+      " Declaro las variables directamente en el append value
+      APPEND VALUE #( LET upd_auth = COND #( WHEN update_granted EQ abap_true
+                                             THEN if_abap_behv=>auth-allowed
+                                             ELSE if_abap_behv=>auth-unauthorized )
+                          del_auth = COND #( WHEN delete_granted EQ abap_true
+                                             THEN if_abap_behv=>auth-allowed
+                                             ELSE if_abap_behv=>auth-unauthorized )
+                      IN
+                      %tky = travel-%tky
+                      %update = upd_auth
+                      %action-edit = upd_auth
+                      %delete = del_auth
+       ) TO result.
+
+    ENDLOOP.
 
   ENDMETHOD.
 
@@ -111,27 +184,27 @@ CLASS lhc_Travel IMPLEMENTATION.
     " Create
     IF requested_authorizations-%create = if_abap_behv=>mk-on.
 
-        " Esto suelta un error por defecto, pero es mejor practica indicar que error
+      " Esto suelta un error por defecto, pero es mejor practica indicar que error
       IF lv_technical_name = 'CB9980005564'.
         result-%create = if_abap_behv=>auth-allowed.
       ELSE.
         result-%create = if_abap_behv=>auth-unauthorized.
 
         APPEND VALUE #(
-            %msg = new /dmo/cm_flight_messages(
+            %msg = NEW /dmo/cm_flight_messages(
                         textid = /dmo/cm_flight_messages=>not_authorized
                         severity = if_abap_behv_message=>severity-error  )
             %global = if_abap_behv=>mk-on
-         ) to reported-travel.
+         ) TO reported-travel.
       ENDIF.
 
     ENDIF.
 
     " Update / Edit
-    if requested_authorizations-%update = if_abap_behv=>mk-on or
+    IF requested_authorizations-%update = if_abap_behv=>mk-on OR
         requested_authorizations-%action-Edit = if_abap_behv=>mk-on. " Porque el Accept Travel por ejemplo hace una edición
 
-        " Esto suelta un error por defecto, pero es mejor practica indicar que error
+      " Esto suelta un error por defecto, pero es mejor practica indicar que error
       IF lv_technical_name = 'CB9980005564'.
         result-%update = if_abap_behv=>auth-allowed.
         result-%action-Edit = if_abap_behv=>auth-allowed.
@@ -140,34 +213,34 @@ CLASS lhc_Travel IMPLEMENTATION.
         result-%action-Edit = if_abap_behv=>auth-unauthorized.
 
         APPEND VALUE #(
-            %msg = new /dmo/cm_flight_messages(
+            %msg = NEW /dmo/cm_flight_messages(
                         textid = /dmo/cm_flight_messages=>not_authorized
                         severity = if_abap_behv_message=>severity-error  )
             %global = if_abap_behv=>mk-on
-         ) to reported-travel.
+         ) TO reported-travel.
 
       ENDIF.
 
-    " Delete
-    IF requested_authorizations-%delete = if_abap_behv=>mk-on.
+      " Delete
+      IF requested_authorizations-%delete = if_abap_behv=>mk-on.
 
         " Esto suelta un error por defecto, pero es mejor practica indicar que error
-      IF lv_technical_name = 'CB9980005564'.
-        result-%delete = if_abap_behv=>auth-allowed.
-      ELSE.
-        result-%delete = if_abap_behv=>auth-unauthorized.
+        IF lv_technical_name = 'CB9980005564'.
+          result-%delete = if_abap_behv=>auth-allowed.
+        ELSE.
+          result-%delete = if_abap_behv=>auth-unauthorized.
 
-        APPEND VALUE #(
-            %msg = new /dmo/cm_flight_messages(
-                        textid = /dmo/cm_flight_messages=>not_authorized
-                        severity = if_abap_behv_message=>severity-error  )
-            %global = if_abap_behv=>mk-on
-         ) to reported-travel.
+          APPEND VALUE #(
+              %msg = NEW /dmo/cm_flight_messages(
+                          textid = /dmo/cm_flight_messages=>not_authorized
+                          severity = if_abap_behv_message=>severity-error  )
+              %global = if_abap_behv=>mk-on
+           ) TO reported-travel.
+        ENDIF.
+
       ENDIF.
 
     ENDIF.
-
-    endif.
 
   ENDMETHOD.
 
@@ -194,6 +267,68 @@ CLASS lhc_Travel IMPLEMENTATION.
   ENDMETHOD.
 
   METHOD deductDiscount.
+
+    " Se hace un loop para poder aplicar el descuento a varios
+    DATA travels_for_update TYPE TABLE FOR UPDATE ztravel_R_caz.
+
+    DATA(keys_discount) = keys.
+
+    LOOP AT keys_discount ASSIGNING FIELD-SYMBOL(<key_discount>)
+    WHERE %param-discount_percent IS INITIAL
+    OR %param-discount_percent > 100
+    OR %param-discount_percent <= 0.
+
+      " Para reportar que hubo un fallo y cortar el hilo de ejecución se usa failed
+      APPEND VALUE #( %tky = <key_discount>-%tky ) TO failed-travel.
+
+      APPEND VALUE #( %tky = <key_discount>-%tky
+      %msg = NEW /dmo/cm_flight_messages(
+                  textid = /dmo/cm_flight_messages=>discount_invalid
+                  severity = if_abap_behv_message=>severity-error  )
+      " Now it is an element
+      %element-BookingFee = if_abap_behv=>mk-on
+      %op-%action-deductDiscount = if_abap_behv=>mk-on
+   ) TO reported-travel.
+
+    ENDLOOP.
+
+    CHECK failed-travel IS INITIAL.
+
+    READ ENTITIES OF ztravel_r_caz IN LOCAL MODE
+    ENTITY Travel
+    FIELDS ( BookingFee )
+    WITH CORRESPONDING #( keys_discount )
+    RESULT DATA(travels).
+
+    DATA percentage TYPE decfloat16.
+
+    LOOP AT travels ASSIGNING FIELD-SYMBOL(<travel>).
+
+      DATA(discount_percent) = keys_discount[ KEY id %tky = <travel>-%tky ]-%param-discount_percent.
+      percentage = discount_percent / 200.
+      DATA(reduce_fee) = <travel>-BookingFee * ( 1 - percentage ).
+
+      APPEND VALUE #( %tky = <travel>-%tky  bookingFee = reduce_fee ) TO travels_for_update.
+
+    ENDLOOP.
+
+    " Finalmente modifico la entidad
+    MODIFY ENTITIES OF ztravel_r_caz IN LOCAL MODE
+    ENTITY Travel
+    UPDATE
+    FIELDS ( BookingFee )
+    WITH travels_for_update.
+
+    " La vuelvo a leer y la retorno
+    READ ENTITIES OF ztravel_r_caz IN LOCAL MODE
+    ENTITY Travel
+    ALL FIELDS
+    WITH CORRESPONDING #( keys )
+    RESULT DATA(travels_discount).
+
+    result = VALUE #( FOR travel IN travels_discount ( %tky = travel-%tky
+                                                        %param = travel ) ).
+
   ENDMETHOD.
 
   METHOD reCalcTotalPrice.
@@ -288,6 +423,62 @@ CLASS lhc_Travel IMPLEMENTATION.
   ENDMETHOD.
 
   METHOD validateCustomer.
+
+  " Aunque ya existe la validación a nivel frontend también se debe hacer a nivel backend porque
+  " se podría mandar un customer ID que no existe
+ DATA customers TYPE SORTED TABLE OF /dmo/customer WITH UNIQUE KEY client customer_id.
+
+    READ ENTITIES OF ztravel_r_CAZ IN LOCAL MODE
+         ENTITY Travel
+         FIELDS ( CustomerID )
+         WITH CORRESPONDING #( keys )
+         RESULT DATA(travels).
+
+" Se pueden descartar duplicados y EXCEPT * es para exceptuar el resto de los campos. No se si será necesario en este caso
+    customers = CORRESPONDING #( travels DISCARDING DUPLICATES MAPPING customer_id = CustomerID EXCEPT * ).
+
+    DELETE customers WHERE customer_id IS INITIAL.
+
+    IF customers IS NOT INITIAL.
+
+    " Inner join con tabla interna para validar con catálogo de cliente
+      SELECT FROM /dmo/customer AS db
+             INNER JOIN @customers AS it ON db~customer_id = it~customer_id
+             FIELDS db~customer_id
+             INTO TABLE @DATA(valid_customers).
+
+    ENDIF.
+
+    LOOP AT travels INTO DATA(travel).
+
+      APPEND VALUE #( %tky        = travel-%tky
+                      %state_area = 'VALIDATE_CUSTOMER' ) TO reported-travel.
+
+      IF travel-CustomerID IS INITIAL.
+
+        APPEND VALUE #( %tky = travel-%tky ) TO failed-travel.
+
+        APPEND VALUE #( %tky = travel-%tky
+                        %state_area = 'VALIDATE_CUSTOMER'
+                        %msg = NEW /dmo/cm_flight_messages( textid   = /dmo/cm_flight_messages=>enter_customer_id
+                                                            severity = if_abap_behv_message=>severity-error )
+                        %element-CustomerId = if_abap_behv=>mk-on ) TO reported-travel.
+
+      ELSEIF NOT line_exists( valid_customers[ customer_id = travel-CustomerID ] ).
+
+        APPEND VALUE #( %tky = travel-%tky ) TO failed-travel.
+
+        APPEND VALUE #( %tky = travel-%tky
+                        %state_area = 'VALIDATE_CUSTOMER'
+                        %msg = NEW /dmo/cm_flight_messages( textid      = /dmo/cm_flight_messages=>customer_unkown
+                                                            customer_id = travel-CustomerID
+                                                            severity    = if_abap_behv_message=>severity-error )
+                        %element-CustomerId = if_abap_behv=>mk-on ) TO reported-travel.
+
+      ENDIF.
+
+    ENDLOOP.
+
   ENDMETHOD.
 
   METHOD validateDates.
