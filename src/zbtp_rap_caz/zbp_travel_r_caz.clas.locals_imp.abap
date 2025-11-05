@@ -332,6 +332,57 @@ CLASS lhc_Travel IMPLEMENTATION.
   ENDMETHOD.
 
   METHOD reCalcTotalPrice.
+
+    TYPES: BEGIN OF ty_amount_per_curr,
+             amount        TYPE /dmo/total_price,
+             currency_code TYPE /dmo/currency_code,
+           END OF ty_amount_per_curr.
+
+    DATA: amount_per_curr TYPE STANDARD TABLE OF ty_amount_per_curr.
+
+    " Read Travel
+    READ ENTITIES OF ztravel_r_caz IN LOCAL MODE
+    ENTITY Travel
+    FIELDS ( BookingFee CurrencyCode )
+    WITH CORRESPONDING #( keys )
+    RESULT DATA(travels).
+
+    DELETE travels WHERE CurrencyCode IS INITIAL.
+
+    LOOP AT travels ASSIGNING FIELD-SYMBOL(<travel>).
+
+      amount_per_curr = VALUE #( ( amount = <travel>-BookingFee
+                                   currency_code = <travel>-CurrencyCode ) ).
+
+      " Read Bookings through the association
+      READ ENTITIES OF ztravel_r_caz IN LOCAL MODE
+      ENTITY Travel BY \_Booking " Path expression
+      " Qué campos pueden cambiar a través del booking?
+      FIELDS ( FlightPrice CurrencyCode )
+      WITH VALUE #( ( %tky = <travel>-%tky ) )
+      RESULT DATA(bookings).
+
+      " Ahora sumo lo de la entidad hija
+      LOOP AT bookings INTO DATA(booking) WHERE CurrencyCode IS NOT INITIAL.
+
+        COLLECT VALUE ty_amount_per_curr( amount = booking-FlightPrice
+                                          currency_code = booking-CurrencyCode ) INTO amount_per_curr.
+
+      ENDLOOP.
+
+      " El booking supplement a pesar de ser el "nieto"
+      " tiene una relación definida por el travelUUID
+      " Entonces no es necesario hacer otro LOOP
+      READ ENTITIES OF ztravel_r_caz IN LOCAL MODE
+      ENTITY Booking BY \_BookingSupplement
+      FIELDS ( Price CurrencyCode )
+      WITH VALUE #( FOR r_booking IN bookings ( %tky = r_booking-%tky ) )
+      RESULT DATA(bookingSuplement).
+
+
+    ENDLOOP.
+
+
   ENDMETHOD.
 
   METHOD rejectTravel.
@@ -360,6 +411,13 @@ CLASS lhc_Travel IMPLEMENTATION.
   ENDMETHOD.
 
   METHOD calculateTotalPrice.
+
+    " Hacer uso del internal action
+    MODIFY ENTITIES OF ztravel_r_caz IN LOCAL MODE
+    ENTITY Travel
+    EXECUTE reCalcTotalPrice
+    FROM CORRESPONDING #( keys ).
+
   ENDMETHOD.
 
   METHOD setStatusToOpen.
@@ -424,9 +482,9 @@ CLASS lhc_Travel IMPLEMENTATION.
 
   METHOD validateCustomer.
 
-  " Aunque ya existe la validación a nivel frontend también se debe hacer a nivel backend porque
-  " se podría mandar un customer ID que no existe
- DATA customers TYPE SORTED TABLE OF /dmo/customer WITH UNIQUE KEY client customer_id.
+    " Aunque ya existe la validación a nivel frontend también se debe hacer a nivel backend porque
+    " se podría mandar un customer ID que no existe
+    DATA customers TYPE SORTED TABLE OF /dmo/customer WITH UNIQUE KEY client customer_id.
 
     READ ENTITIES OF ztravel_r_CAZ IN LOCAL MODE
          ENTITY Travel
@@ -434,14 +492,14 @@ CLASS lhc_Travel IMPLEMENTATION.
          WITH CORRESPONDING #( keys )
          RESULT DATA(travels).
 
-" Se pueden descartar duplicados y EXCEPT * es para exceptuar el resto de los campos. No se si será necesario en este caso
+    " Se pueden descartar duplicados y EXCEPT * es para exceptuar el resto de los campos. No se si será necesario en este caso
     customers = CORRESPONDING #( travels DISCARDING DUPLICATES MAPPING customer_id = CustomerID EXCEPT * ).
 
     DELETE customers WHERE customer_id IS INITIAL.
 
     IF customers IS NOT INITIAL.
 
-    " Inner join con tabla interna para validar con catálogo de cliente
+      " Inner join con tabla interna para validar con catálogo de cliente
       SELECT FROM /dmo/customer AS db
              INNER JOIN @customers AS it ON db~customer_id = it~customer_id
              FIELDS db~customer_id
