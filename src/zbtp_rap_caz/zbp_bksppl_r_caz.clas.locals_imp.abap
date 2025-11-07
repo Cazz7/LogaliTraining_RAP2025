@@ -33,6 +33,24 @@ CLASS lhc_BookingSupplement IMPLEMENTATION.
   ENDMETHOD.
 
   METHOD calculateTotalPrice.
+
+    " We are in booking so I need parent's parent information first
+    READ ENTITIES OF ztravel_r_caz IN LOCAL MODE
+      ENTITY BookingSupplement BY \_Travel
+      FIELDS ( TravelUUID )
+      " Contiene la llave del draft y el UUID
+      " Estoy mirando si es equivalente
+      WITH CORRESPONDING #( keys )
+     "WITH VALUE  #( FOR r_key IN keys ( %tky = r_key-%tky ) )
+      RESULT DATA(travels).
+
+    " Trigger parent internal action
+    MODIFY ENTITIES OF ztravel_r_caz IN LOCAL MODE
+        ENTITY Travel
+        EXECUTE reCalcTotalPrice
+        " Aquí ya tengo las llaves del padre
+        FROM CORRESPONDING #( travels ).
+
   ENDMETHOD.
 
   METHOD setBookSupplNumber.

@@ -49,8 +49,8 @@ CLASS lhc_Booking IMPLEMENTATION.
       FIELDS ( TravelUUID )
       " Contiene la llave del draft y el UUID
       " Estoy mirando si es equivalente
-     " WITH CORRESPONDING #( keys )
-      WITH VALUE  #( FOR r_key IN keys ( %tky = r_key-%tky ) )
+      WITH CORRESPONDING #( keys )
+     "WITH VALUE  #( FOR r_key IN keys ( %tky = r_key-%tky ) )
       RESULT DATA(travels).
 
     " Trigger parent internal action

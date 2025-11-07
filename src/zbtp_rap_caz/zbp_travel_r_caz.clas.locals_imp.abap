@@ -419,16 +419,17 @@ CLASS lhc_Travel IMPLEMENTATION.
 *            CATCH cx_exchange_rates.
 *          ENDTRY.
 
-          zcl_flight_amdp_caz=>convert_currency(
-            EXPORTING
-              iv_amount               = single_amt_per_curr-amount
-              iv_currency_code_source = single_amt_per_curr-currency_code
-              iv_currency_code_target = <travel>-CurrencyCode
-              iv_exchange_rate_date   = cl_abap_context_info=>get_system_date( )
-            IMPORTING
-              ev_amount               = DATA(conv_amount2)
-          ).
-          <travel>-TotalPrice += conv_amount2.
+*          zcl_flight_amdp_caz=>convert_currency(
+*            EXPORTING
+*              iv_amount               = single_amt_per_curr-amount
+*              iv_currency_code_source = single_amt_per_curr-currency_code
+*              iv_currency_code_target = <travel>-CurrencyCode
+*              iv_exchange_rate_date   = cl_abap_context_info=>get_system_date( )
+*            IMPORTING
+*              ev_amount               = DATA(conv_amount2)
+*          ).
+          conv_amount = single_amt_per_curr-amount * 2.
+          <travel>-TotalPrice += conv_amount.
 
         ENDIF.
 
