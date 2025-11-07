@@ -338,7 +338,8 @@ CLASS lhc_Travel IMPLEMENTATION.
              currency_code TYPE /dmo/currency_code,
            END OF ty_amount_per_curr.
 
-    DATA: amount_per_curr TYPE STANDARD TABLE OF ty_amount_per_curr.
+    DATA: amount_per_curr TYPE STANDARD TABLE OF ty_amount_per_curr,
+          conv_amount     TYPE /dmo/total_price.
 
     " Read Travel
     READ ENTITIES OF ztravel_r_caz IN LOCAL MODE
@@ -377,10 +378,72 @@ CLASS lhc_Travel IMPLEMENTATION.
       ENTITY Booking BY \_BookingSupplement
       FIELDS ( Price CurrencyCode )
       WITH VALUE #( FOR r_booking IN bookings ( %tky = r_booking-%tky ) )
-      RESULT DATA(bookingSuplement).
+      RESULT DATA(bookingsSuplement).
+
+      LOOP AT bookingsSuplement INTO DATA(bookingSuplement) WHERE CurrencyCode IS NOT INITIAL.
+
+        COLLECT VALUE ty_amount_per_curr( amount = bookingSuplement-Price
+                                          currency_code = bookingSuplement-CurrencyCode ) INTO amount_per_curr.
+
+      ENDLOOP.
+
+      CLEAR <travel>-TotalPrice.
+
+      LOOP AT amount_per_curr INTO DATA(single_amt_per_curr).
+
+        " Currency conversion
+        IF single_amt_per_curr-currency_code = <travel>-CurrencyCode.
+
+          <travel>-TotalPrice += single_amt_per_curr-amount.
+
+        ELSE.
+*          TRY.
+*              CLEAR conv_amount.
+*              cl_exchange_rates=>convert_to_local_currency(
+*                EXPORTING
+*                  date              = cl_abap_context_info=>get_system_date( )
+*                  foreign_amount    = single_amt_per_curr-amount
+*                  foreign_currency  = single_amt_per_curr-currency_code
+*                  local_currency    = <travel>-CurrencyCode
+**            rate              = 0
+**            rate_type         = 'M'
+**            do_read_tcurr     = abap_true
+*                IMPORTING
+**            exchange_rate     =
+**            foreign_factor    =
+*                  local_amount      = conv_amount
+**            local_factor      =
+**            fixed_rate        =
+**            derived_rate_type =
+*              ).
+*            CATCH cx_exchange_rates.
+*          ENDTRY.
+
+          zcl_flight_amdp_caz=>convert_currency(
+            EXPORTING
+              iv_amount               = single_amt_per_curr-amount
+              iv_currency_code_source = single_amt_per_curr-currency_code
+              iv_currency_code_target = <travel>-CurrencyCode
+              iv_exchange_rate_date   = cl_abap_context_info=>get_system_date( )
+            IMPORTING
+              ev_amount               = DATA(conv_amount2)
+          ).
+          <travel>-TotalPrice += conv_amount2.
+
+        ENDIF.
+
+      ENDLOOP.
 
 
     ENDLOOP.
+
+    " Modify the entities
+    " Write back the modified price to entity
+    MODIFY ENTITIES OF ztravel_r_caz IN LOCAL MODE
+  ENTITY Travel
+  UPDATE
+  FIELDS ( TotalPrice )
+  WITH CORRESPONDING #( travels ).
 
 
   ENDMETHOD.
